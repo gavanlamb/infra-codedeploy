@@ -72,7 +72,7 @@ stages:
     variables:
       - template: variables/production.ap-southeast-2.yml@templates
       - name: WORKSPACE_PREFIX
-        value: expensely-infrastructure-codedeploy-
+        value: codedeploy-
     jobs:
       - template: terraform/plan-and-approve.yml@templates
         parameters:
