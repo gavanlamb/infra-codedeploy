@@ -62,9 +62,9 @@ stages:
             displayName: Zip
             inputs:
               rootFolderOrFile: $(Build.SourcesDirectory)/lambdas/postman
-              includeRootFolder: true
+              includeRootFolder: false
               archiveType: zip
-              archiveFile: postman.$(Build.BuildNumber).zip
+              archiveFile: $(Build.SourcesDirectory)/lambdas/postman/postman.$(Build.BuildNumber).zip
               replaceExistingArchive: true
           - task: PublishBuildArtifacts@1
             displayName: Publish archive
