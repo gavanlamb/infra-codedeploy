@@ -92,7 +92,7 @@ data "aws_iam_policy_document" "lambda" {
 
 resource "aws_lambda_function" "postman" {
   function_name = local.postman_name
-  role = aws_iam_role.postman[0].arn
+  role = aws_iam_role.postman.arn
   description = "Postman tests"
   
   handler = "index.handler"
@@ -123,7 +123,7 @@ resource "aws_lambda_function" "postman" {
   }
 }
 resource "aws_cloudwatch_log_group" "postman" {
-  name = "/aws/lambda/${aws_lambda_function.postman[0].function_name}"
+  name = "/aws/lambda/${aws_lambda_function.postman.function_name}"
   retention_in_days = 14
   kms_key_id = data.aws_kms_alias.cloudwatch.id
 }
@@ -146,10 +146,10 @@ resource "aws_iam_role" "postman" {
 EOF
 }
 resource "aws_iam_role_policy_attachment" "postman_vpc" {
-  role = aws_iam_role.postman[0].name
+  role = aws_iam_role.postman.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 resource "aws_iam_role_policy_attachment" "postman_codedeploy" {
-  role = aws_iam_role.postman[0].name
+  role = aws_iam_role.postman.name
   policy_arn = aws_iam_policy.lambda.arn
 }
