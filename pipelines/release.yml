@@ -27,6 +27,7 @@ stages:
       - job: configure
         displayName: Configure
         steps:
+          - checkout: none
           - task: PowerShell@2
             displayName: Set build identifier
             name: setNPMBuildIdentifier
@@ -43,28 +44,30 @@ stages:
           - task: Npm@1
             displayName: Restore
             inputs:
-              command: 'ci'
-              workingDir: 'working folder'
+              command: ci
+              workingDir: $(Build.SourcesDirectory)/lambda/postman
           - task: Npm@1
             displayName: Build
             inputs:
-              command: 'custom'
-              workingDir: 'working folder'
-              customCommand: 'build'
+              command: custom
+              workingDir: $(Build.SourcesDirectory)/lambda/postman
+              customCommand: build
+            env:
+              BUILD_NUMBER: $(Build.BuildNumber)
           - task: ArchiveFiles@2
             displayName: Zip
             inputs:
-              rootFolderOrFile: 'working folder'
+              rootFolderOrFile: $(Build.SourcesDirectory)/lambda/postman
               includeRootFolder: true
-              archiveType: 'zip'
-              archiveFile: 'postman.$(Build.BuildId).zip'
+              archiveType: zip
+              archiveFile: postman.$(Build.BuildNumber).zip
               replaceExistingArchive: true
           - task: PublishBuildArtifacts@1
             displayName: Publish archive
             inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)/as'
-              ArtifactName: 'postman.build identifier'
-              publishLocation: 'Container'
+              PathtoPublish: $(Build.SourcesDirectory)/lambda/postman/postman.$(Build.BuildNumber).zip
+              ArtifactName: postman.$(Build.BuildNumber)
+              publishLocation: Container
 
   - stage: production
     displayName: Production
