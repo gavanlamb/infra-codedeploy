@@ -19,3 +19,7 @@ variable "code_deploy_bucket_name" {
   type = string
   description = "Bucket name for CodeDeploy artifacts."
 }
+
+locals {
+  postman_name = "codedeploy-postman${var.environment}"
+}
