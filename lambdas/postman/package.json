@@ -1,5 +1,5 @@
 {
-  "name": "service-time-postman-tests",
+  "name": "codedeploy-postman-tests",
   "version": "1.0.0",
   "description": "This service is manage time records",
   "repository": "https://github.com/Expensely/service-time",
