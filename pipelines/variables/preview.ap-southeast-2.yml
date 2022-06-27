@@ -1,0 +1,2 @@
+variables:
+  CODEDEPLOY_BUCKET_NAME: expensely-code-deploy-production
