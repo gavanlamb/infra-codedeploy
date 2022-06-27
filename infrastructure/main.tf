@@ -99,15 +99,13 @@ resource "aws_lambda_function" "postman" {
   runtime = "nodejs14.x"
   
   s3_bucket = "expensely-code-deploy-production"
-  s3_key = "functions/postman.1.0.2599-1.zip"
+  s3_key = "functions/postman.${var.build_identifier}.zip"
 
   publish = true
   layers = ["arn:aws:lambda:${var.region}:901920570463:layer:aws-otel-nodejs-amd64-ver-1-2-0:1"]
 
   memory_size = 10240
-
   reserved_concurrent_executions = 1
-
   timeout = 900
 
   tracing_config {
@@ -149,4 +147,8 @@ resource "aws_iam_role_policy_attachment" "postman_vpc" {
 resource "aws_iam_role_policy_attachment" "postman_codedeploy" {
   role = aws_iam_role.postman.name
   policy_arn = aws_iam_policy.lambda.arn
+}
+resource "aws_iam_role_policy_attachment" "postman_bucket" {
+  role = aws_iam_role.postman.name
+  policy_arn = aws_iam_policy.bucket.arn
 }

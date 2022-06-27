@@ -6,6 +6,10 @@ variable "region" {
   type = string
   description = "Name of the AWS region to deploy resources to"
 }
+variable "build_identifier" {
+  type = string
+  description = "Build identifier"
+}
 
 variable "code_deploy_role_name" {
   type = string
@@ -21,5 +25,5 @@ variable "code_deploy_bucket_name" {
 }
 
 locals {
-  postman_name = "codedeploy-postman${var.environment}"
+  postman_name = "codedeploy-postman-${lower(var.environment)}"
 }
