@@ -5,6 +5,32 @@ const aws = require('aws-sdk');
 const fs = require("fs");
 const fsPromises = require("fs").promises;
 
+const getConfiguration = async (
+    deploymentId) => {
+    const codeDeploy = aws.CodeDeploy();
+    const params = {
+        deploymentId: deploymentId
+    };
+
+    const response = await codeDeploy.getDeployment(params).promise();
+    const bucket = response.deploymentInfo.s3location.bucket;
+    const key = response.deploymentInfo.s3location.key;
+
+    const pathSegments = key.split('/');
+    pathSegments.pop();
+    pathSegments.pop();
+    pathSegments.push('postman');
+    const testsBasePath = pathSegments.join('/');
+    return {
+        bucket: bucket,
+        key: key,
+        collectionFileKey: `${testsBasePath}/tests/tests.postman_collection.json`,
+        environmentFileKey: `${testsBasePath}/tests/environment.postman_collection.json`,
+        resultsFileKey: `${testsBasePath}/results/results.xml`,
+        resultsFileLocalPath: '/tmp/results.xml'
+    }
+};
+
 const downloadFile = async (
     bucket,
     path,
@@ -51,75 +77,9 @@ const notifyCodeDeploy = (
 }
 
 exports.handler = async (event) => {
-    console.log(`Event:${JSON.stringify(event)}`);
-
-    const bucketName = process.env.S3_BUCKET;
-    console.log(`Bucket:${bucketName}`);
-    if(!bucketName || bucketName.trim() === ''){
-        notifyCodeDeploy(
-            event.DeploymentId,
-            event.LifecycleEventHookExecutionId,
-            'Failed');
-        return 'Failed';
-    }
-
-    const bucketBasePath = process.env.S3_BUCKET_PATH; // time/1.1.1.1/Development/api-tests/
-    console.log(`Bucket base path:${bucketBasePath}`);
-    if(!bucketBasePath || bucketBasePath.trim() === ''){
-        notifyCodeDeploy(
-            event.DeploymentId,
-            event.LifecycleEventHookExecutionId,
-            'Failed');
-        return 'Failed';
-    }
-
-    const testPath = bucketBasePath + '/' + 'tests';
-    console.log(`Bucket test folder path:${testPath}`);
-
-    const resultsPath = bucketBasePath + '/' + 'results';
-    console.log(`Bucket results folder path:${resultsPath}`);
-
-    const resultsFile = 'results.xml';
-    console.log(`Results file:${resultsFile}`);
-    const resultsFilePath = `/tmp/${resultsFile}`;
-
-    const collectionFile = process.env.POSTMAN_COLLECTION_FILE;
-    console.log(`Collection file:${collectionFile}`);
-    if(!collectionFile || collectionFile.trim() === ''){
-        notifyCodeDeploy(
-            event.DeploymentId,
-            event.LifecycleEventHookExecutionId,
-            'Failed');
-        return 'Failed';
-    }
-    const collectionFilePath = await downloadFile(bucketName, testPath, collectionFile);
-    console.log(`Collection file path:${collectionFilePath}`);
-
-    const environmentFile = process.env.POSTMAN_ENVIRONMENT_FILE;
-    console.log(`Environment file:${environmentFile}`);
-    if(!environmentFile || environmentFile.trim() === ''){
-        notifyCodeDeploy(
-            event.DeploymentId,
-            event.LifecycleEventHookExecutionId,
-            'Failed');
-        return 'Failed';
-    }
-    const environmentFilePath = await downloadFile(bucketName, testPath, environmentFile);
-    console.log(`Environment file path:${environmentFilePath}`);
-
-    const environmentVariables = process.env;
-    const variables = [];
-    for (let key in environmentVariables) {
-        if(key.startsWith("POSTMAN_VARIABLE_")){
-            const name = key.replace("POSTMAN_VARIABLE_", "")
-            const value = environmentVariables[key];
-            console.log(`${key} - ${name}:${value}`);
-            variables.push({
-                "key": name,
-                "value": value
-            });
-        }
-    }
+    const configuration = await getConfiguration();
+    const collectionFilePath = await downloadFile(configuration.collectionFileKey);
+    const environmentFilePath = await downloadFile(configuration.environmentFileKey);
 
     await new Promise(resolve => setTimeout(resolve, 10000));
 
@@ -128,26 +88,25 @@ exports.handler = async (event) => {
             newman.run(
                 {
                     collection: collectionFilePath,
-                    delayRequest: 0,
-                    envVar: variables,
                     environment: environmentFilePath,
+                    delayRequest: 9000,
                     reporters: 'junitfull',
                     reporter: {
                         junitfull: {
-                            export: resultsFilePath,
+                            export: configuration.resultsFileLocalPath,
                         },
                     },
                 },
                 (newmanError, newmanData) => {
-                    if (bucketName) {
+                    if (configuration.bucket) {
                         const s3 = new aws.S3();
-                        const testResultsData = fs.readFileSync(resultsFilePath, 'utf8');
+                        const testResultsData = fs.readFileSync(configuration.resultsFileLocalPath, 'utf8');
                         s3.upload(
                             {
                                 ContentType: "application/xml",
-                                Bucket: bucketName,
+                                Bucket: configuration.bucket,
                                 Body: testResultsData,
-                                Key: `${resultsPath}/${resultsFile}`
+                                Key: configuration.resultsFileKey
                             },
                             function (s3Error, s3Data) {
                                 console.log(JSON.stringify(s3Error ? s3Error : s3Data));
