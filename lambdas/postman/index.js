@@ -25,7 +25,7 @@ const getConfiguration = async (
         bucket: bucket,
         key: key,
         collectionFileKey: `${testsBasePath}/tests/tests.postman_collection.json`,
-        environmentFileKey: `${testsBasePath}/tests/environment.postman_collection.json`,
+        environmentFileKey: `${testsBasePath}/tests/environment.postman_environment.json`,
         resultsFileKey: `${testsBasePath}/results/results.xml`,
         resultsFileLocalPath: '/tmp/results.xml'
     }
