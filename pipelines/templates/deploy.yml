@@ -22,64 +22,56 @@ parameters:
   - name: environment
     displayName: Name of environment
     type: string
+  - name:  postmanEnvironmentFile
+    displayName: Environment file to upload
+    type: string
+    default: ""
   - name: serviceName
     displayName: Name of service
     type: string
+  - name: postmanTestFile
+    displayName: Test file to upload
+    type: string
+    default: ""
   - name: workingDirectory
     displayName: Directory where the files are located
     type: string
     default: $(Pipeline.Workspace)
 
 steps:
-  - task: PowerShell@2
-    displayName: Push AppSpec file
-    inputs:
-      targetType: inline
-      script: |
-        aws s3 cp deploy.yaml s3://${{ parameters.codeDeployBucket }}/${{ parameters.serviceName }}/${{ parameters.buildNumber }}/${{ parameters.environment }}/codedeploy/deploy.yaml
-      errorActionPreference: default
-      showWarnings: true
-      pwsh: true
+  - ${{ if ne(parameters.postmanTestFile, "") }}:
+    - template: ./publish-postman-tests.yml
+      parameters:
+        awsAccessKeyId: ${{ parameters.awsAccessKeyId }}
+        awsSecretKeyId: ${{ parameters.awsSecretKeyId }}
+        awsDefaultRegion: ${{ parameters.awsDefaultRegion }}
+        buildNumber: ${{ parameters.buildNumber }}
+        codeDeployBucket: ${{ parameters.codeDeployBucket }}
+        environment: ${{ parameters.environment }}
+        environmentFile: ${{ parameters.postmanEnvironmentFile }}
+        serviceName: ${{ parameters.serviceName }}
+        testFile: ${{ parameters.postmanTestFile }}
+        workingDirectory: ${{ parameters.workingDirectory }}
+        
+  - template: ./create-deployment.yml
+    parameters:
+      awsAccessKeyId: ${{ parameters.awsAccessKeyId }}
+      awsSecretKeyId: ${{ parameters.awsSecretKeyId }}
+      awsDefaultRegion: ${{ parameters.awsDefaultRegion }}
+      buildNumber: ${{ parameters.buildNumber }}
+      codeDeployBucket: ${{ parameters.codeDeployBucket }}
+      environment: ${{ parameters.environment }}
+      serviceName: ${{ parameters.serviceName }}
       workingDirectory: ${{ parameters.workingDirectory }}
-    env:
-      AWS_ACCESS_KEY_ID: ${{ parameters.awsAccessKeyId }}
-      AWS_SECRET_ACCESS_KEY: ${{ parameters.awsSecretKeyId }}
-      AWS_DEFAULT_REGION: ${{ parameters.awsDefaultRegion }}
 
-  - task: PowerShell@2
-    displayName: Deploy
-    name: deploy
-    inputs:
-      targetType: inline
-      script: |
-        $deploymentId = aws deploy create-deployment --application-name ${{ parameters.serviceName }}-${{ parameters.environment }} --deployment-group-name ${{ parameters.deploymentGroupName }} --s3-location bucket=${{ parameters.codeDeployBucket }},key=${{ parameters.serviceName }}/${{ parameters.buildNumber }}/${{ parameters.environment }}/codedeploy/deploy.yaml,bundleType=YAML  --output json --query 'deploymentId' | ConvertFrom-Json
-        Write-Host "##vso[task.setvariable variable=DEPLOYMENT_ID;isOutput=true]$deploymentId"
-        Write-Host "##vso[task.setvariable variable=DEPLOYMENT_STATUS;isOutput=true]STARTED"
-        Write-Host "Waiting for deployment:$deploymentId to finish"
-        aws deploy wait deployment-successful --deployment-id $deploymentId
-        Write-Host "##vso[task.setvariable variable=DEPLOYMENT_STATUS;isOutput=true]COMPLETED"
-      errorActionPreference: default
-      showWarnings: true
-      pwsh: true
-      workingDirectory: ${{ parameters.workingDirectory }}
-    env:
-      AWS_ACCESS_KEY_ID: ${{ parameters.awsAccessKeyId }}
-      AWS_SECRET_ACCESS_KEY: ${{ parameters.awsSecretKeyId }}
-      AWS_DEFAULT_REGION: ${{ parameters.awsDefaultRegion }}
-
-  - task: PowerShell@2
-    displayName: Stop deploy
-    condition: or(and(canceled(), eq(variables['deploy.DEPLOYMENT_STATUS'], 'STARTED')), and(failed(), eq(variables['deploy.DEPLOYMENT_STATUS'], 'STARTED')))
-    inputs:
-      targetType: inline
-      script: |
-        Write-Host "$(deploy.DEPLOYMENT_ID)"
-        aws deploy stop-deployment --deployment-id $(deploy.DEPLOYMENT_ID)
-      errorActionPreference: default
-      showWarnings: true
-      pwsh: true
-      workingDirectory: ${{ parameters.workingDirectory }}
-    env:
-      AWS_ACCESS_KEY_ID: ${{ parameters.awsAccessKeyId }}
-      AWS_SECRET_ACCESS_KEY: ${{ parameters.awsSecretKeyId }}
-      AWS_DEFAULT_REGION: ${{ parameters.awsDefaultRegion }}
+  - ${{ if ne(parameters.postmanTestFile, "") }}:
+    - template: ./publish-postman-results.yml
+      parameters:
+        awsAccessKeyId: ${{ parameters.awsAccessKeyId }}
+        awsSecretKeyId: ${{ parameters.awsSecretKeyId }}
+        awsDefaultRegion: ${{ parameters.awsDefaultRegion }}
+        buildNumber: ${{ parameters.buildNumber }}
+        codeDeployBucket: ${{ parameters.codeDeployBucket }}
+        environment: ${{ parameters.environment }}
+        serviceName: ${{ parameters.serviceName }}
+        workingDirectory: ${{ parameters.workingDirectory }}
