@@ -25,7 +25,9 @@ const getConfiguration = async (
         bucket: bucket,
         key: key,
         collectionFileKey: `${testsBasePath}/tests/tests.postman_collection.json`,
+        collectionFileLocalPath: `/tmp/tests.postman_collection.json`,
         environmentFileKey: `${testsBasePath}/tests/environment.postman_environment.json`,
+        environmentFileLocalPath: `/tmp/environment.postman_environment.json`,
         resultsFileKey: `${testsBasePath}/results/results.xml`,
         resultsFileLocalPath: '/tmp/results.xml'
     }
@@ -33,18 +35,35 @@ const getConfiguration = async (
 
 const downloadFile = async (
     bucket,
-    path,
-    filename) => {
+    key,
+    localPath) => {
     const s3 = new aws.S3();
     const object = await s3.getObject(
         {
             Bucket: bucket,
-            Key: `${path}/${filename}`
+            Key: key
         }).promise();
-    const filePath = `/tmp/${filename}`
-    await fsPromises.writeFile(filePath, object.Body);
-    return filePath;
+    await fsPromises.writeFile(localPath, object.Body);
 };
+
+const uploadFile = (
+    bucket,
+    key,
+    localPath) => {
+    const s3 = new aws.S3();
+    const testResultsData = fs.readFileSync(localPath, 'utf8');
+    s3.upload(
+        {
+            ContentType: "application/xml",
+            Bucket: bucket,
+            Body: testResultsData,
+            Key: key
+        },
+        function (s3Error, s3Data) {
+            console.log(JSON.stringify(s3Error ? s3Error : s3Data));
+        }
+    );
+}
 
 const notifyCodeDeploy = (
     deploymentId,
@@ -77,51 +96,46 @@ const notifyCodeDeploy = (
 }
 
 exports.handler = async (event) => {
-    const configuration = await getConfiguration();
-    const collectionFilePath = await downloadFile(configuration.collectionFileKey);
-    const environmentFilePath = await downloadFile(configuration.environmentFileKey);
-
-    await new Promise(resolve => setTimeout(resolve, 10000));
+    const configuration = await getConfiguration(
+        event.DeploymentId);
+    await Promise.all([
+        downloadFile(
+            configuration.bucket,
+            configuration.collectionFileKey,
+            configuration.collectionFileLocalPath),
+        downloadFile(
+            configuration.bucket,
+            configuration.environmentFileKey,
+            configuration.environmentFileLocalPath)
+    ]);
 
     return new Promise(
         function(resolve, reject) {
             newman.run(
                 {
-                    collection: collectionFilePath,
-                    environment: environmentFilePath,
-                    delayRequest: 9000,
+                    collection: configuration.collectionFileLocalPath,
+                    environment: configuration.environmentFileLocalPath,
+                    delayRequest: 500,
                     reporters: 'junitfull',
                     reporter: {
                         junitfull: {
                             export: configuration.resultsFileLocalPath,
-                        },
-                    },
+                        }
+                    }
                 },
                 (newmanError, newmanData) => {
-                    if (configuration.bucket) {
-                        const s3 = new aws.S3();
-                        const testResultsData = fs.readFileSync(configuration.resultsFileLocalPath, 'utf8');
-                        s3.upload(
-                            {
-                                ContentType: "application/xml",
-                                Bucket: configuration.bucket,
-                                Body: testResultsData,
-                                Key: configuration.resultsFileKey
-                            },
-                            function (s3Error, s3Data) {
-                                console.log(JSON.stringify(s3Error ? s3Error : s3Data));
-                                console.log(newmanError);
-                                console.log(newmanData);
-                                console.log(newmanData?.run?.failures);
-                                notifyCodeDeploy(
-                                    event.DeploymentId,
-                                    event.LifecycleEventHookExecutionId,
-                                    newmanError || newmanData?.run?.failures.length > 0 ? 'Failed' : 'Succeeded',
-                                    resolve,
-                                    reject);
-                            }
-                        );
-                    }
+                    console.log(newmanError);
+                    console.log(newmanData);
+                    uploadFile(
+                        configuration.bucket,
+                        configuration.resultsFileKey,
+                        configuration.resultsFileLocalPath);
+                    notifyCodeDeploy(
+                        event.DeploymentId,
+                        event.LifecycleEventHookExecutionId,
+                        newmanError || newmanData?.run?.failures.length > 0 ? 'Failed' : 'Succeeded',
+                        resolve,
+                        reject);
                 }
             );
         }
