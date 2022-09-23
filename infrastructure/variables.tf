@@ -6,22 +6,8 @@ variable "region" {
   type = string
   description = "Name of the AWS region to deploy resources to"
 }
-variable "build_identifier" {
+variable "shared_account_provider_role_arn" {
   type = string
-  description = "Build identifier"
-}
-
-variable "code_deploy_role_name" {
-  type = string
-  description = "Name of the role for CodeDeploy"
-}
-variable "code_deploy_policy_name" {
-  type = string
-  description = "Name of the policy for CodeDeploy"
-}
-variable "code_deploy_bucket_name" {
-  type = string
-  description = "Bucket name for CodeDeploy artifacts."
 }
 
 locals {

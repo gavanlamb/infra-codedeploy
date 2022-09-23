@@ -1,10 +1,10 @@
 name: 1.0$(Rev:.r)
 resources:
   repositories:
-    - repository: templates
+    - repository: terraform-templates
       type: github
-      name: expensely/azure-devops-templates
-      endpoint: Expensely
+      name: expensely/infra-terraform-backend
+      endpoint: expensely
 
 pool:
   vmImage: ubuntu-latest
@@ -64,65 +64,37 @@ stages:
               rootFolderOrFile: $(Build.SourcesDirectory)/lambdas/postman
               includeRootFolder: false
               archiveType: zip
-              archiveFile: $(Build.SourcesDirectory)/lambdas/postman/postman.$(Build.BuildNumber).zip
+              archiveFile: $(Build.SourcesDirectory)/lambdas/postman/postman.zip
               replaceExistingArchive: true
           - task: PublishBuildArtifacts@1
             displayName: Publish archive
             inputs:
-              PathtoPublish: $(Build.SourcesDirectory)/lambdas/postman/postman.$(Build.BuildNumber).zip
-              ArtifactName: postman.$(Build.BuildNumber)
+              PathtoPublish: $(Build.SourcesDirectory)/lambdas/postman/postman.zip
+              ArtifactName: postman
               publishLocation: Container
+
+  - stage: preview
+    displayName: Preview
+    dependsOn: build
+    variables:
+      - group: terraform.platform.preview
+    jobs:
+      - template: pipelines/templates/plan-and-approve.yml@terraform-templates
+        parameters:
+          terraformVariablesFile: variables/time.preview.ap-southeast-2.tfvars
+          terraformWorkspace: codedeploy_time_preview
+          environment: Preview
+          terraformArtifactName: time.$(TF_ARTIFACT_NAME)
 
   - stage: production
     displayName: Production
-    dependsOn: build
+    dependsOn: preview
     variables:
-      - template: variables/production.ap-southeast-2.yml@templates
+      - group: terraform.platform.production
     jobs:
-      - job: plan
-        displayName: Plan
-        steps:
-          - template: aws/iam/configure.yml@templates
-          - template: terraform/plan.yml@templates
-            parameters:
-              artifactName: ${{ variables.TF_ARTIFACT_NAME }}
-              planAdditionalCommandOptions: -var-file="variables/${{ variables.ENVIRONMENT }}.${{ variables.AWS_DEFAULT_REGION }}.tfvars" -var="build_identifier=$(Build.BuildNumber)"
-              workspaceName: codedeploy-${{ variables.ENVIRONMENT }}
-
-      - template: azure-devops/approve.yml@templates
+      - template: pipelines/templates/plan-and-approve.yml@terraform-templates
         parameters:
-          dependsOn: plan
-          timeoutInMinutes: 60
-          userToNotify: '[Expensely]\Expensely Team'
-
-      - deployment: apply
-        displayName: Apply
-        dependsOn: approve
-        environment: ${{ variables.ENVIRONMENT }}
-        variables:
-          - template: variables/production.ap-southeast-2.yml
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-                - download: none
-                - template: aws/iam/configure.yml@templates
-                - task: DownloadPipelineArtifact@2
-                  displayName: Download postman
-                  inputs:
-                    buildType: current
-                    artifactName: postman.$(Build.BuildNumber)
-                    targetPath: $(Pipeline.Workspace)
-                - task: PowerShell@2
-                  displayName: Upload archive
-                  inputs:
-                    targetType: inline
-                    script: |
-                      aws s3 cp postman.$(Build.BuildNumber).zip s3://$(CODEDEPLOY_BUCKET_NAME)/functions/postman.$(Build.BuildNumber).zip
-                    errorActionPreference: default
-                    showWarnings: true
-                    pwsh: true
-                    workingDirectory: $(Pipeline.Workspace)
-                - template: terraform/apply.yml@templates
-                  parameters:
-                    artifactName: ${{ variables.TF_ARTIFACT_NAME }}
+          terraformVariablesFile: variables/time.production.ap-southeast-2.tfvars
+          terraformWorkspace: codedeploy_time_production
+          environment: Production
+          terraformArtifactName: time.$(TF_ARTIFACT_NAME)
