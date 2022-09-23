@@ -64,65 +64,65 @@ stages:
               rootFolderOrFile: $(Build.SourcesDirectory)/lambdas/postman
               includeRootFolder: false
               archiveType: zip
-              archiveFile: $(Build.SourcesDirectory)/lambdas/postman/postman.$(Build.BuildNumber).zip
+              archiveFile: $(Build.SourcesDirectory)/lambdas/postman/postman.zip
               replaceExistingArchive: true
           - task: PublishBuildArtifacts@1
             displayName: Publish archive
             inputs:
-              PathtoPublish: $(Build.SourcesDirectory)/lambdas/postman/postman.$(Build.BuildNumber).zip
-              ArtifactName: postman.$(Build.BuildNumber)
+              PathtoPublish: $(Build.SourcesDirectory)/lambdas/postman/postman.zip
+              ArtifactName: postman
               publishLocation: Container
 
-  - stage: production
-    displayName: Production
-    dependsOn: build
-    variables:
-      - template: variables/production.ap-southeast-2.yml@templates
-    jobs:
-      - job: plan
-        displayName: Plan
-        steps:
-          - template: aws/iam/configure.yml@templates
-          - template: terraform/plan.yml@templates
-            parameters:
-              artifactName: ${{ variables.TF_ARTIFACT_NAME }}
-              planAdditionalCommandOptions: -var-file="variables/${{ variables.ENVIRONMENT }}.${{ variables.AWS_DEFAULT_REGION }}.tfvars" -var="build_identifier=$(Build.BuildNumber)"
-              workspaceName: codedeploy-${{ variables.ENVIRONMENT }}
-
-      - template: azure-devops/approve.yml@templates
-        parameters:
-          dependsOn: plan
-          timeoutInMinutes: 60
-          userToNotify: '[Expensely]\Expensely Team'
-
-      - deployment: apply
-        displayName: Apply
-        dependsOn: approve
-        environment: ${{ variables.ENVIRONMENT }}
-        variables:
-          - template: variables/production.ap-southeast-2.yml
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-                - download: none
-                - template: aws/iam/configure.yml@templates
-                - task: DownloadPipelineArtifact@2
-                  displayName: Download postman
-                  inputs:
-                    buildType: current
-                    artifactName: postman.$(Build.BuildNumber)
-                    targetPath: $(Pipeline.Workspace)
-                - task: PowerShell@2
-                  displayName: Upload archive
-                  inputs:
-                    targetType: inline
-                    script: |
-                      aws s3 cp postman.$(Build.BuildNumber).zip s3://$(CODEDEPLOY_BUCKET_NAME)/functions/postman.$(Build.BuildNumber).zip
-                    errorActionPreference: default
-                    showWarnings: true
-                    pwsh: true
-                    workingDirectory: $(Pipeline.Workspace)
-                - template: terraform/apply.yml@templates
-                  parameters:
-                    artifactName: ${{ variables.TF_ARTIFACT_NAME }}
+#  - stage: production
+#    displayName: Production
+#    dependsOn: build
+#    variables:
+#      - template: variables/production.ap-southeast-2.yml@templates
+#    jobs:
+#      - job: plan
+#        displayName: Plan
+#        steps:
+#          - template: aws/iam/configure.yml@templates
+#          - template: terraform/plan.yml@templates
+#            parameters:
+#              artifactName: ${{ variables.TF_ARTIFACT_NAME }}
+#              planAdditionalCommandOptions: -var-file="variables/${{ variables.ENVIRONMENT }}.${{ variables.AWS_DEFAULT_REGION }}.tfvars" -var="build_identifier=$(Build.BuildNumber)"
+#              workspaceName: codedeploy-${{ variables.ENVIRONMENT }}
+#
+#      - template: azure-devops/approve.yml@templates
+#        parameters:
+#          dependsOn: plan
+#          timeoutInMinutes: 60
+#          userToNotify: '[Expensely]\Expensely Team'
+#
+#      - deployment: apply
+#        displayName: Apply
+#        dependsOn: approve
+#        environment: ${{ variables.ENVIRONMENT }}
+#        variables:
+#          - template: variables/production.ap-southeast-2.yml
+#        strategy:
+#          runOnce:
+#            deploy:
+#              steps:
+#                - download: none
+#                - template: aws/iam/configure.yml@templates
+#                - task: DownloadPipelineArtifact@2
+#                  displayName: Download postman
+#                  inputs:
+#                    buildType: current
+#                    artifactName: postman.$(Build.BuildNumber)
+#                    targetPath: $(Pipeline.Workspace)
+#                - task: PowerShell@2
+#                  displayName: Upload archive
+#                  inputs:
+#                    targetType: inline
+#                    script: |
+#                      aws s3 cp postman.$(Build.BuildNumber).zip s3://$(CODEDEPLOY_BUCKET_NAME)/functions/postman.$(Build.BuildNumber).zip
+#                    errorActionPreference: default
+#                    showWarnings: true
+#                    pwsh: true
+#                    workingDirectory: $(Pipeline.Workspace)
+#                - template: terraform/apply.yml@templates
+#                  parameters:
+#                    artifactName: ${{ variables.TF_ARTIFACT_NAME }}
