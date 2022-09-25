@@ -34,54 +34,47 @@ resource "aws_iam_user_policy_attachment" "assume_policy" {
   policy_arn = aws_iam_policy.assume_policy[each.key].arn
 }
 
-resource "aws_iam_policy" "assume_policy" {
-  for_each = {for adad in var.azure_devops_projects_details:  adad.provider_name => adad}
+#resource "aws_iam_policy" "assume_policy" {
+#  for_each = {for adad in var.azure_devops_projects_details:  adad.provider_name => adad}
+#
+#  provider = "aws.${each.value.provider_name}"
+#
+#  name = "${each.value.provider_name}.assume_role"
+#  policy = data.aws_iam_policy_document.assume_policy[each.key].json
+#}
+#data "aws_iam_policy_document" "assume_policy" {
+#  for_each = {for adad in var.azure_devops_projects_details:  adad.provider_name => adad}
+#  statement {
+#    actions = ["sts:AssumeRole"]
+#    effect = "Allow"
+#    resources = each.value.assumeRoleUserArns
+#  }
+#}
 
-  provider = "aws.${each.value.provider_name}"
-
-  name = "${each.value.provider_name}.assume_role"
-  policy = data.aws_iam_policy_document.assume_policy[each.key].json
-}
-data "aws_iam_policy_document" "assume_policy" {
-  for_each = {for adad in var.azure_devops_projects_details:  adad.provider_name => adad}
-  statement {
-    actions = ["sts:AssumeRole"]
-    effect = "Allow"
-    resources = each.value.assumeRoleUserArns
-  }
-}
-
-// TODO add the trust relationship role from the account
 resource "aws_iam_role" "admin_access" {
   for_each = {for adad in var.azure_devops_projects_details:  adad.provider_name => adad}
+  
   provider = "aws.${each.value.provider_name}"
-  assume_role_policy = aws_iam_role_policy.a
-}
-resource "aws_iam_role_policy" "sts_assume" {
-  for_each = {for adad in var.azure_devops_projects_details:  adad.provider_name => adad}
-  provider = "aws.${each.value.provider_name}"
-  policy = ""
-  role = ""
+  path = "/cicd/"
+  assume_role_policy = data.aws_iam_policy_document.sts_assume[each.key].json
 }
 data "aws_iam_policy_document" "sts_assume"{
   for_each = {for adad in var.azure_devops_projects_details:  adad.provider_name => adad}
   provider = "aws.${each.value.provider_name}"
   statement {
-    sid = ""
     effect = "Allow"
     principals {
       type = "aws"
-      identifiers = 
+      identifiers = []
     }
-    actions = [
-    ]
+    actions = ["sts:AssumeRole"]
   }
 }
-resource "policy_attachment" "" {}
-resource "aws_iam_role_policy_attachment" "" {
-  target_group_arn = ""
-  target_id        = ""
-  policy_arn       = ""
-  role             = ""
+
+resource "aws_iam_role_policy_attachment" "adminstrator" {
+  for_each = {for adad in var.azure_devops_projects_details:  adad.provider_name => adad}
+  provider = "aws.${each.value.provider_name}"
+  
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+  role = aws_iam_policy.assume_policy[each.key].name
 }
-// admin access
