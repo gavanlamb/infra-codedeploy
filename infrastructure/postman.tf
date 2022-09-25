@@ -15,7 +15,7 @@ data "aws_iam_policy_document" "postman" {
 }
 
 resource "aws_lambda_function" "postman" {
-  function_name = local.postman_name
+  function_name = "codedeploy-postman"
   role = aws_iam_role.postman.arn
   description = "Postman tests"
 
@@ -76,6 +76,6 @@ resource "aws_iam_role_policy_attachment" "postman_codedeploy" {
 }
 resource "aws_iam_role_policy_attachment" "postman_bucket" {
   role = aws_iam_role.postman.name
-  policy_arn = aws_iam_policy.bucket.arn
+  policy_arn = aws_iam_policy.codedeploy.arn
 }
 

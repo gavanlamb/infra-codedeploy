@@ -1,0 +1,4 @@
+﻿environment="Production"
+region="ap-southeast-2"
+
+bucket_name="expensely-codedeploy-ap-southeast-2"
