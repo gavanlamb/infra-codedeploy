@@ -12,13 +12,14 @@ resource "aws_kms_alias" "codedeploy" {
   target_key_id = aws_kms_key.codedeploy.key_id
 }
 
-resource "aws_iam_policy" "codedeploy_key" {
+resource "aws_iam_policy" "codedeploy" {
   description = "Policy for terraform state bucket"
   name = "codedeploy-key"
-  path = "/codedeploy/"
-  policy = data.aws_iam_policy_document.codedeploy_key.json
+  path = "/cicd/"
+  policy = data.aws_iam_policy_document.codedeploy.json
+
 }
-data "aws_iam_policy_document" "codedeploy_key" {
+data "aws_iam_policy_document" "codedeploy" {
   statement {
     effect = "Allow"
     actions = [
