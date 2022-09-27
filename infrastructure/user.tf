@@ -89,11 +89,9 @@ resource "aws_iam_role" "codedeploy_user_access_time_preview" {
 data "aws_iam_policy_document" "sts_assume_time_preview"{
   statement {
     principals {
-      type = "aws"
-      identifiers = [
-        "arn:aws:iam::258593516853:user/cicd/codedeploy.platform.preview",
-        "arn:aws:iam::258593516853:user/cicd/codedeploy.time.preview"
-      ]
+      type = "AWS"
+      identifiers = ["arn:aws:iam::258593516853:user/cicd/codedeploy.platform.preview",
+        "arn:aws:iam::258593516853:user/cicd/codedeploy.time.preview"]
     }
     actions = ["sts:AssumeRole"]
   }
@@ -103,6 +101,21 @@ resource "aws_iam_role_policy_attachment" "admin_access_time_preview" {
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
   role = aws_iam_role.codedeploy_user_access_time_preview.name
 }
+data "aws_iam_policy_document" "example" {
+  statement {
+    sid = "1"
+
+    actions = [
+      "s3:ListAllMyBuckets",
+      "s3:GetBucketLocation"
+    ]
+
+    resources = [
+      "arn:aws:s3:::*",
+    ]
+  }
+}
+
 
 resource "aws_iam_role" "codedeploy_user_access_time_production" {
   provider = aws.time-production
@@ -111,11 +124,9 @@ resource "aws_iam_role" "codedeploy_user_access_time_production" {
 data "aws_iam_policy_document" "sts_assume_time_production"{
   statement {
     principals {
-      type = "aws"
-      identifiers = [
-        "arn:aws:iam::258593516853:user/cicd/codedeploy.platform.production",
-        "arn:aws:iam::258593516853:user/cicd/codedeploy.time.production"
-      ]
+      type = "AWS"
+      identifiers = ["arn:aws:iam::258593516853:user/cicd/codedeploy.platform.production",
+        "arn:aws:iam::258593516853:user/cicd/codedeploy.time.production"]
     }
     actions = ["sts:AssumeRole"]
   }
@@ -134,13 +145,11 @@ resource "aws_iam_role" "codedeploy_user_access_shared_preview" {
 data "aws_iam_policy_document" "sts_assume_shared_preview"{
   statement {
     principals {
-      type = "aws"
-      identifiers = [
-        "arn:aws:iam::258593516853:user/cicd/codedeploy.user.preview",
+      type = "AWS"
+      identifiers = ["arn:aws:iam::258593516853:user/cicd/codedeploy.user.preview",
         "arn:aws:iam::258593516853:user/cicd/codedeploy.shared.preview",
         "arn:aws:iam::258593516853:user/cicd/codedeploy.time.preview",
-        "arn:aws:iam::258593516853:user/cicd/codedeploy.platform.preview"
-      ]
+        "arn:aws:iam::258593516853:user/cicd/codedeploy.platform.preview"]
     }
     actions = ["sts:AssumeRole"]
   }
@@ -158,13 +167,11 @@ resource "aws_iam_role" "codedeploy_user_access_shared_production" {
 data "aws_iam_policy_document" "sts_assume_shared_production"{
   statement {
     principals {
-      type = "aws"
-      identifiers = [
-        "arn:aws:iam::258593516853:user/cicd/codedeploy.user.production",
+      type = "AWS"
+      identifiers = ["arn:aws:iam::258593516853:user/cicd/codedeploy.user.production",
         "arn:aws:iam::258593516853:user/cicd/codedeploy.shared.production",
         "arn:aws:iam::258593516853:user/cicd/codedeploy.time.production",
-        "arn:aws:iam::258593516853:user/cicd/codedeploy.platform.production"
-      ]
+        "arn:aws:iam::258593516853:user/cicd/codedeploy.platform.production"]
     }
     actions = ["sts:AssumeRole"]
   }
@@ -183,10 +190,8 @@ resource "aws_iam_role" "codedeploy_user_access_networking_preview" {
 data "aws_iam_policy_document" "sts_assume_networking_preview"{
   statement {
     principals {
-      type = "aws"
-      identifiers = [
-        "arn:aws:iam::258593516853:user/cicd/codedeploy.platform.preview"
-      ]
+      type = "AWS"
+      identifiers = ["arn:aws:iam::258593516853:user/cicd/codedeploy.platform.preview"]
     }
     actions = ["sts:AssumeRole"]
   }
@@ -204,10 +209,8 @@ resource "aws_iam_role" "codedeploy_user_access_networking_production" {
 data "aws_iam_policy_document" "sts_assume_networking_production"{
   statement {
     principals {
-      type = "aws"
-      identifiers = [
-        "arn:aws:iam::258593516853:user/cicd/codedeploy.platform.production"
-      ]
+      type = "AWS"
+      identifiers = ["arn:aws:iam::258593516853:user/cicd/codedeploy.platform.production"]
     }
     actions = ["sts:AssumeRole"]
   }
@@ -226,12 +229,10 @@ resource "aws_iam_role" "codedeploy_user_access_user_preview" {
 data "aws_iam_policy_document" "sts_assume_user_preview"{
   statement {
     principals {
-      type = "aws"
-      identifiers = [
-        "arn:aws:iam::258593516853:user/cicd/codedeploy.platform.preview",
+      type = "AWS"
+      identifiers = ["arn:aws:iam::258593516853:user/cicd/codedeploy.platform.preview",
         "arn:aws:iam::258593516853:user/cicd/codedeploy.time.preview",
-        "arn:aws:iam::258593516853:user/cicd/codedeploy.user.preview"
-      ]
+        "arn:aws:iam::258593516853:user/cicd/codedeploy.user.preview"]
     }
     actions = ["sts:AssumeRole"]
   }
@@ -249,12 +250,10 @@ resource "aws_iam_role" "codedeploy_user_access_user_production" {
 data "aws_iam_policy_document" "sts_assume_user_production"{
   statement {
     principals {
-      type = "aws"
-      identifiers = [
-        "arn:aws:iam::258593516853:user/cicd/codedeploy.platform.production",
+      type = "AWS"
+      identifiers = ["arn:aws:iam::258593516853:user/cicd/codedeploy.platform.production",
         "arn:aws:iam::258593516853:user/cicd/codedeploy.time.production",
-        "arn:aws:iam::258593516853:user/cicd/codedeploy.user.production"
-      ]
+        "arn:aws:iam::258593516853:user/cicd/codedeploy.user.production"]
     }
     actions = ["sts:AssumeRole"]
   }
@@ -273,13 +272,11 @@ resource "aws_iam_role" "codedeploy_user_access_platform_preview" {
 data "aws_iam_policy_document" "sts_assume_platform_preview"{
   statement {
     principals {
-      type = "aws"
-      identifiers = [
-        "arn:aws:iam::258593516853:user/cicd/codedeploy.user.preview",
+      type = "AWS"
+      identifiers = ["arn:aws:iam::258593516853:user/cicd/codedeploy.user.preview",
         "arn:aws:iam::258593516853:user/cicd/codedeploy.shared.preview",
         "arn:aws:iam::258593516853:user/cicd/codedeploy.time.preview",
-        "arn:aws:iam::258593516853:user/cicd/codedeploy.platform.preview"
-      ]
+        "arn:aws:iam::258593516853:user/cicd/codedeploy.platform.preview"]
     }
     actions = ["sts:AssumeRole"]
   }
@@ -297,13 +294,11 @@ resource "aws_iam_role" "codedeploy_user_access_platform_production" {
 data "aws_iam_policy_document" "sts_assume_platform_production"{
   statement {
     principals {
-      type = "aws"
-      identifiers = [
-        "arn:aws:iam::258593516853:user/cicd/codedeploy.user.production",
+      type = "AWS"
+      identifiers = ["arn:aws:iam::258593516853:user/cicd/codedeploy.user.production",
         "arn:aws:iam::258593516853:user/cicd/codedeploy.shared.production",
         "arn:aws:iam::258593516853:user/cicd/codedeploy.time.production",
-        "arn:aws:iam::258593516853:user/cicd/codedeploy.platform.production"
-      ]
+        "arn:aws:iam::258593516853:user/cicd/codedeploy.platform.production"]
     }
     actions = ["sts:AssumeRole"]
   }
