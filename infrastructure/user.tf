@@ -88,7 +88,6 @@ resource "aws_iam_role" "codedeploy_user_access_time_preview" {
 }
 data "aws_iam_policy_document" "sts_assume_time_preview"{
   statement {
-    effect = "Allow"
     principals {
       type = "aws"
       identifiers = [
@@ -111,7 +110,6 @@ resource "aws_iam_role" "codedeploy_user_access_time_production" {
 }
 data "aws_iam_policy_document" "sts_assume_time_production"{
   statement {
-    effect = "Allow"
     principals {
       type = "aws"
       identifiers = [
@@ -135,7 +133,6 @@ resource "aws_iam_role" "codedeploy_user_access_shared_preview" {
 }
 data "aws_iam_policy_document" "sts_assume_shared_preview"{
   statement {
-    effect = "Allow"
     principals {
       type = "aws"
       identifiers = [
@@ -160,7 +157,6 @@ resource "aws_iam_role" "codedeploy_user_access_shared_production" {
 }
 data "aws_iam_policy_document" "sts_assume_shared_production"{
   statement {
-    effect = "Allow"
     principals {
       type = "aws"
       identifiers = [
@@ -186,7 +182,6 @@ resource "aws_iam_role" "codedeploy_user_access_networking_preview" {
 }
 data "aws_iam_policy_document" "sts_assume_networking_preview"{
   statement {
-    effect = "Allow"
     principals {
       type = "aws"
       identifiers = [
@@ -208,7 +203,6 @@ resource "aws_iam_role" "codedeploy_user_access_networking_production" {
 }
 data "aws_iam_policy_document" "sts_assume_networking_production"{
   statement {
-    effect = "Allow"
     principals {
       type = "aws"
       identifiers = [
@@ -231,7 +225,6 @@ resource "aws_iam_role" "codedeploy_user_access_user_preview" {
 }
 data "aws_iam_policy_document" "sts_assume_user_preview"{
   statement {
-    effect = "Allow"
     principals {
       type = "aws"
       identifiers = [
@@ -255,7 +248,6 @@ resource "aws_iam_role" "codedeploy_user_access_user_production" {
 }
 data "aws_iam_policy_document" "sts_assume_user_production"{
   statement {
-    effect = "Allow"
     principals {
       type = "aws"
       identifiers = [
@@ -280,7 +272,6 @@ resource "aws_iam_role" "codedeploy_user_access_platform_preview" {
 }
 data "aws_iam_policy_document" "sts_assume_platform_preview"{
   statement {
-    effect = "Allow"
     principals {
       type = "aws"
       identifiers = [
@@ -305,7 +296,6 @@ resource "aws_iam_role" "codedeploy_user_access_platform_production" {
 }
 data "aws_iam_policy_document" "sts_assume_platform_production"{
   statement {
-    effect = "Allow"
     principals {
       type = "aws"
       identifiers = [
