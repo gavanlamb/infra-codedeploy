@@ -1,6 +1,9 @@
 ﻿provider "aws" {
   region  = var.region
   
+  assume_role {
+    role_arn = "arn:aws:iam::258593516853:role/terraform.infrastructure"
+  }
   default_tags {
     tags = {
       Application = "Expensely"
