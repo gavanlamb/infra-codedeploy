@@ -21,7 +21,7 @@ resource "aws_lambda_function" "postman" {
 
   handler = "index.handler"
   runtime = "nodejs14.x"
-  filename = "postman.zip"
+  filename = "postman/postman.zip"
 
   publish = true
   layers = ["arn:aws:lambda:${var.region}:901920570463:layer:aws-otel-nodejs-amd64-ver-1-2-0:1"]
