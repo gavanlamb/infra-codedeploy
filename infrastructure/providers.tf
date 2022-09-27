@@ -46,7 +46,7 @@ provider "aws" {
   region  = var.region
 
   assume_role {
-    role_arn = "arn:aws:iam::04633789203:role/terraform.infrastructure"
+    role_arn = "arn:aws:iam::104633789203:role/terraform.infrastructure"
   }
   default_tags {
     tags = {
