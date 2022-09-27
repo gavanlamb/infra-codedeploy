@@ -54,6 +54,10 @@ data "aws_iam_policy_document" "codedeploy_ssl" {
     sid     = "AllowSSLRequestsOnly"
     actions = ["s3:*"]
     effect  = "Deny"
+    principals {
+      type = "*"
+      identifiers = ["*"]
+    }
     resources = [
       aws_s3_bucket.codedeploy.arn,
       "${aws_s3_bucket.codedeploy.arn}/*"
@@ -62,10 +66,6 @@ data "aws_iam_policy_document" "codedeploy_ssl" {
       test     = "Bool"
       variable = "aws:SecureTransport"
       values   = ["false"]
-    }
-    principals {
-      type        = "*"
-      identifiers = ["*"]
     }
   }
 }
