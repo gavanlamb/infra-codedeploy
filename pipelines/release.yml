@@ -1,0 +1,127 @@
+name: 1.0$(Rev:.r)
+resources:
+  repositories:
+    - repository: terraform-templates
+      type: github
+      name: expensely/infra-terraform-backend
+      endpoint: expensely
+
+pool:
+  vmImage: ubuntu-latest
+
+trigger:
+  batch: true
+  branches:
+    include:
+      - "main"
+
+pr:
+  branches:
+    include:
+      - '*'
+
+stages:
+  - stage: build
+    displayName: Build
+    jobs:
+      - job: configure
+        displayName: Configure
+        steps:
+          - checkout: none
+          - task: PowerShell@2
+            displayName: Set build identifier
+            name: setNPMBuildIdentifier
+            inputs:
+              targetType: inline
+              script: Write-Host "##vso[build.updatebuildnumber]1.0.$(build.buildid)-$(System.StageAttempt)"
+              errorActionPreference: default
+              showWarnings: true
+              pwsh: true
+      - job: postman
+        displayName: Postman
+        dependsOn: configure
+        steps:
+          - task: NodeTool@0
+            displayName: Install Node:14
+            inputs:
+              versionSpec: 14
+          - task: Npm@1
+            displayName: Restore
+            inputs:
+              command: ci
+              workingDir: $(Build.SourcesDirectory)/lambdas/postman
+          - task: Npm@1
+            displayName: Build
+            inputs:
+              command: custom
+              workingDir: $(Build.SourcesDirectory)/lambdas/postman
+              customCommand: run build
+            env:
+              BUILD_NUMBER: $(Build.BuildNumber)
+          - task: ArchiveFiles@2
+            displayName: Zip
+            inputs:
+              rootFolderOrFile: $(Build.SourcesDirectory)/lambdas/postman
+              includeRootFolder: false
+              archiveType: zip
+              archiveFile: $(Build.SourcesDirectory)/lambdas/postman/postman.zip
+              replaceExistingArchive: true
+          - task: PublishBuildArtifacts@1
+            displayName: Publish archive
+            inputs:
+              PathtoPublish: $(Build.SourcesDirectory)/lambdas/postman/postman.zip
+              ArtifactName: postman
+              publishLocation: Container
+
+  - stage: codedeploy
+    displayName: CodeDeploy
+    dependsOn: build
+    variables:
+      - group: terraform.platform.production
+    jobs:
+      - job: plan
+        displayName: Plan
+        steps:
+          - template: pipelines/templates/plan.yml@terraform-templates
+            parameters:
+              planAdditionalCommandOptions: -var-file="variables/production.ap-southeast-2.tfvars" -var="azure_devops_org_service_url=$(System.CollectionUri)" -var="azure_devops_personal_access_token=$(System.AccessToken)"
+              workspace: codedeploy
+          - template: pipelines/templates/infracost.yml@terraform-templates
+            parameters:
+              breakdownAdditionalCommandOptions: --terraform-var-file variables/production.ap-southeast-2.tfvars
+          - template: pipelines/templates/tfsec.yml@terraform-templates
+            parameters:
+              commandOptions: --var-file="variables/production.ap-southeast-2.tfvars"
+              workspace: codedeploy
+
+      - job: approve
+        displayName: Approve
+        dependsOn: plan
+        pool: server
+        steps:
+          - task: ManualValidation@0
+            displayName: Manual validation
+            inputs:
+              notifyUsers: '[Expensely]\Expensely Team'
+              onTimeout: reject
+              instructions: Validate the dependant job
+            timeoutInMinutes: 60
+
+      - deployment: apply
+        displayName: Apply
+        dependsOn: approve
+        environment:
+          name: CodeDeploy
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: none
+                - task: DownloadBuildArtifacts@1
+                  displayName: Download Postman
+                  inputs:
+                    buildType: current
+                    downloadType: single
+                    artifactName: postman
+                    downloadPath: $(Pipeline.Workspace)
+                - template: pipelines/templates/apply.yml@terraform-templates

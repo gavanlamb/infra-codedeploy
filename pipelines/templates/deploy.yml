@@ -1,0 +1,77 @@
+parameters:
+  - name: awsAccessKeyId
+    displayName: AWS access key id
+    type: string
+    default: $(AWS_ACCESS_KEY_ID)
+  - name: awsSecretKeyId
+    displayName: AWS secret key id
+    type: string
+    default: $(AWS_SECRET_KEY_ID)
+  - name: awsDefaultRegion
+    displayName: AWS default region
+    type: string
+    default: $(AWS_DEFAULT_REGION)
+  - name: buildNumber
+    displayName: Build number
+    type: string
+    default: $(Build.BuildNumber)
+  - name: codeDeployBucket
+    displayName: Name of codedeploy bucket
+    type: string
+    default: $(CODEDEPLOY_BUCKET_NAME)
+  - name: environment
+    displayName: Name of environment
+    type: string
+  - name:  postmanEnvironmentFile
+    displayName: Environment file to upload
+    type: string
+    default: ""
+  - name: serviceName
+    displayName: Name of service
+    type: string
+  - name: postmanTestFile
+    displayName: Test file to upload
+    type: string
+    default: ""
+  - name: workingDirectory
+    displayName: Directory where the files are located
+    type: string
+    default: $(Pipeline.Workspace)
+
+steps:
+  - ${{ if ne(parameters.postmanTestFile, "") }}:
+    - template: ./publish-postman-tests.yml
+      parameters:
+        awsAccessKeyId: ${{ parameters.awsAccessKeyId }}
+        awsSecretKeyId: ${{ parameters.awsSecretKeyId }}
+        awsDefaultRegion: ${{ parameters.awsDefaultRegion }}
+        buildNumber: ${{ parameters.buildNumber }}
+        codeDeployBucket: ${{ parameters.codeDeployBucket }}
+        environment: ${{ parameters.environment }}
+        environmentFile: ${{ parameters.postmanEnvironmentFile }}
+        serviceName: ${{ parameters.serviceName }}
+        testFile: ${{ parameters.postmanTestFile }}
+        workingDirectory: ${{ parameters.workingDirectory }}
+        
+  - template: ./create-deployment.yml
+    parameters:
+      awsAccessKeyId: ${{ parameters.awsAccessKeyId }}
+      awsSecretKeyId: ${{ parameters.awsSecretKeyId }}
+      awsDefaultRegion: ${{ parameters.awsDefaultRegion }}
+      buildNumber: ${{ parameters.buildNumber }}
+      codeDeployBucket: ${{ parameters.codeDeployBucket }}
+      environment: ${{ parameters.environment }}
+      serviceName: ${{ parameters.serviceName }}
+      workingDirectory: ${{ parameters.workingDirectory }}
+
+  - ${{ if ne(parameters.postmanTestFile, "") }}:
+    - template: ./publish-postman-results.yml
+      parameters:
+        awsAccessKeyId: ${{ parameters.awsAccessKeyId }}
+        awsSecretKeyId: ${{ parameters.awsSecretKeyId }}
+        awsDefaultRegion: ${{ parameters.awsDefaultRegion }}
+        buildNumber: ${{ parameters.buildNumber }}
+        codeDeployBucket: ${{ parameters.codeDeployBucket }}
+        environment: ${{ parameters.environment }}
+        serviceName: ${{ parameters.serviceName }}
+        workingDirectory: ${{ parameters.workingDirectory }}
