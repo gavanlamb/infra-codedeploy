@@ -10,7 +10,7 @@
   }
 }
 provider "aws" {
-  alias = "shared.production"
+  alias = "shared-production"
   region  = var.region
 
   assume_role {
@@ -26,7 +26,7 @@ provider "aws" {
   }
 }
 provider "aws" {
-  alias = "shared.preview"
+  alias = "shared-preview"
   region  = var.region
 
   assume_role {
@@ -42,7 +42,7 @@ provider "aws" {
   }
 }
 provider "aws" {
-  alias = "time.production"
+  alias = "time-production"
   region  = var.region
 
   assume_role {
@@ -58,7 +58,7 @@ provider "aws" {
   }
 }
 provider "aws" {
-  alias = "time.preview"
+  alias = "time-preview"
   region  = var.region
 
   assume_role {
@@ -74,7 +74,7 @@ provider "aws" {
   }
 }
 provider "aws" {
-  alias = "user.production"
+  alias = "user-production"
   region  = var.region
 
   assume_role {
@@ -90,7 +90,7 @@ provider "aws" {
   }
 }
 provider "aws" {
-  alias = "user.preview"
+  alias = "user-preview"
   region  = var.region
 
   assume_role {
@@ -106,7 +106,7 @@ provider "aws" {
   }
 }
 provider "aws" {
-  alias = "networking.production"
+  alias = "networking-production"
   region  = var.region
 
   assume_role {
@@ -122,7 +122,7 @@ provider "aws" {
   }
 }
 provider "aws" {
-  alias = "networking.preview"
+  alias = "networking-preview"
   region  = var.region
 
   assume_role {
@@ -138,7 +138,7 @@ provider "aws" {
   }
 }
 provider "aws" {
-  alias = "platform.production"
+  alias = "platform-production"
   region  = var.region
 
   assume_role {
@@ -154,7 +154,7 @@ provider "aws" {
   }
 }
 provider "aws" {
-  alias = "platform.preview"
+  alias = "platform-preview"
   region  = var.region
 
   assume_role {
