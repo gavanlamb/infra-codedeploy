@@ -43,8 +43,8 @@ resource "aws_lambda_function" "postman" {
   }
 }
 data "aws_kms_alias" "cloudwatch" {
-  provider = aws.platform-production
-  name = "alias/expensely/cloudwatch"
+  provider = aws.shared-production
+  name = "expensely/cloudwatch"
 }
 resource "aws_cloudwatch_log_group" "postman" {
   name = "/aws/lambda/${aws_lambda_function.postman.function_name}"
