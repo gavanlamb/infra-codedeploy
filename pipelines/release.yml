@@ -84,3 +84,4 @@ stages:
           terraformVariablesFile: variables/production.ap-southeast-2.tfvars
           terraformWorkspace: codedeploy
           environment: CodeDeploy
+          terraformPlanAdditionalCommandOptions: -var="azure_devops_org_service_url=$(System.CollectionUri)" -var="azure_devops_personal_access_token=$(System.AccessToken)"
