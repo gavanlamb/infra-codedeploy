@@ -73,28 +73,14 @@ stages:
               ArtifactName: postman
               publishLocation: Container
 
-  - stage: preview
-    displayName: Preview
+  - stage: codedeploy
+    displayName: CodeDeploy
     dependsOn: build
-    variables:
-      - group: terraform.platform.preview
-    jobs:
-      - template: pipelines/templates/plan-and-approve.yml@terraform-templates
-        parameters:
-          terraformVariablesFile: variables/time.preview.ap-southeast-2.tfvars
-          terraformWorkspace: codedeploy_time_preview
-          environment: Preview
-          terraformArtifactName: time.$(TF_ARTIFACT_NAME)
-
-  - stage: production
-    displayName: Production
-    dependsOn: preview
     variables:
       - group: terraform.platform.production
     jobs:
       - template: pipelines/templates/plan-and-approve.yml@terraform-templates
         parameters:
-          terraformVariablesFile: variables/time.production.ap-southeast-2.tfvars
-          terraformWorkspace: codedeploy_time_production
-          environment: Production
-          terraformArtifactName: time.$(TF_ARTIFACT_NAME)
+          terraformVariablesFile: variables/production.ap-southeast-2.tfvars
+          terraformWorkspace: codedeploy
+          environment: CodeDeploy
